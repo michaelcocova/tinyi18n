@@ -12,7 +12,9 @@ export interface TinyI18nGenerateCommand {
   projectRoot: string
 }
 
-export type TinyI18nCommand = TinyI18nUiCommand | TinyI18nGenerateCommand
+export type TinyI18nCommand
+  = | TinyI18nUiCommand
+    | TinyI18nGenerateCommand
 
 export interface ResolvedCommandResult {
   command?: TinyI18nCommand

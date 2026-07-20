@@ -1,5 +1,6 @@
 export {}
 declare global {
+  type self = Window
   type Writable<T> = {
     -readonly [P in keyof T]: T[P];
   }

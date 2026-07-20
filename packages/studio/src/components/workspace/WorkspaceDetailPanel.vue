@@ -17,6 +17,11 @@ const { localeConfig } = useLocaleConfig()
 const { tree } = useGroupTree()
 const { toggleExpanded, select, selectedNode, moveItems, removeItems, createGroup, createMessage } = useTranslations()
 const { renameKey, renameTitle, setTranslation } = useItemEditor()
+const draftKey = ref('')
+
+watch(() => selectedNode.value?.id, () => {
+  draftKey.value = selectedNode.value?.original.key ?? ''
+}, { immediate: true })
 const blockedSourceIds = computed(() =>
   selectedNode.value ? [selectedNode.value.id] : [],
 )
@@ -92,12 +97,18 @@ async function handleDelete() {
   await removeItems([current.id])
 }
 
-function updateSelectedKey(value: string | number) {
-  if (!selectedNode.value) {
+async function commitSelectedKey() {
+  const node = selectedNode.value
+  if (!node) {
     return
   }
 
-  renameKey(selectedNode.value.id, String(value))
+  const nextKey = String(draftKey.value ?? '')
+  if (nextKey === String(node.original.key ?? '')) {
+    return
+  }
+
+  await renameKey(node.id, nextKey)
 }
 
 function updateSelectedTitle(value: string | number) {
@@ -123,8 +134,9 @@ function updateTranslation(locale: string, value: string | number) {
 
 <template>
   <div class="h-full overflow-y-auto">
+    {{ selectedNode }}
     <div
-      class="size-full flex flex-col gap-4 p-4 opacity-0 transition-opacity duration-400"
+      class="size-full max-w-5xl mx-auto flex flex-col gap-4 p-4 opacity-0 transition-opacity duration-400"
       :class="selectedNode?.id && 'opacity-100'"
     >
       <ElemField legend="操作">
@@ -182,11 +194,19 @@ function updateTranslation(locale: string, value: string | number) {
         </div>
       </ElemField>
       <ElemField legend="Key(开发使用)">
-        {{ selectedNode?.meta.keyChain.join(".") }}
+        <template #extra>
+          {{ selectedNode?.meta.keyChain.join(".") }}
+          <!-- 分割符 -->
+          <CopyButton
+            class="size-3.5"
+            separator="."
+            :content="selectedNode?.meta.keyChain"
+          />
+        </template>
         <Input
-          :model-value="selectedNode?.original.key"
+          v-model="draftKey"
           placeholder="请输入"
-          @update:model-value="updateSelectedKey"
+          @blur="commitSelectedKey"
         />
       </ElemField>
       <ElemField

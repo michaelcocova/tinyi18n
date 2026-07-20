@@ -1,68 +1,63 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useInitForm } from '../../composables/useInitForm'
-import { getWebConfig } from '../../web-config'
 import SetupForm from './SetupForm.vue'
-import SetupPreview from './SetupPreview.vue'
 
 const form = useInitForm()
 
-const generatedCode = computed(() => {
-  const values = form.values
+function normalizeNamespaces(namespaces: any[] = []) {
+  return namespaces
+    .filter(item => item?.key)
+    .map(item => ({
+      key: item.key,
+      description: item.description || '',
+    }))
+}
 
+function normalizeLocales(locales: any[] = []) {
+  return locales
+    .filter(locale => locale?.code)
+    .map(locale => ({
+      code: locale.code,
+      filename: locale.filename || `${locale.code}.yaml`,
+    }))
+}
+
+function normalizeEntries(entries: any[] = []) {
+  return entries
+    .filter(entry => entry?.dir)
+    .map(entry => ({
+      dir: entry.dir,
+      paths: (entry.paths || []).filter((path: string) => path.trim() !== ''),
+    }))
+}
+
+function buildSetupConfig(values: Record<string, any>) {
+  const mode = values.mode || 'multi'
   const config: Record<string, any> = {
-    filename: values.filename || '.data.json',
-    locales: (values.locales || [])
-      .filter((l: any) => l.code)
-      .map((l: any) => ({
-        code: l.code,
-        filename: l.filename || `${l.code}.json`,
-      })),
+    filename: values.filename || '.data',
+    namespaces: mode === 'single'
+      ? []
+      : normalizeNamespaces(values.namespaces),
+    locales: normalizeLocales(values.locales),
+    mode,
   }
 
-  const entries = (values.entries || [])
-    .filter((e: any) => e.dir)
-    .map((e: any) => ({
-      dir: e.dir,
-      paths: e.paths || [],
-    }))
-
+  const entries = normalizeEntries(values.entries)
   if (entries.length > 0) {
     config.entries = entries
   }
 
-  // Generate JS object string, removing quotes around keys for better readability
-  const configString = JSON.stringify(config, null, 2).replace(
-    /"([^"]+)":/g,
-    '$1:',
-  )
-
-  return `import { defineConfig } from "tinyi18n-cli";\n\nexport default defineConfig(${configString});\n`
-})
-
+  return config
+}
 const isSubmitting = ref(false)
 
 const onSubmit = form.handleSubmit(async (values) => {
   try {
     isSubmitting.value = true
+    const config = buildSetupConfig(values)
 
-    // Generate config object removing undefined values and old keys.
-    const config: Record<string, any> = {
-      filename: values.filename || '.data.json',
-      locales: (values.locales || []).map((locale: any) => ({
-        code: locale.code,
-        filename: locale.filename || `${locale.code}.json`,
-      })),
-    }
-
-    if (values.entries && values.entries.length > 0) {
-      config.entries = values.entries.map((entry: any) => ({
-        dir: entry.dir,
-        paths: entry.paths?.filter((p: string) => p.trim() !== '') || [],
-      }))
-    }
-
-    const response = await fetch(`${getWebConfig().apiBase}/setup`, {
+    const response = await fetch('/setup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
@@ -102,7 +97,6 @@ const onSubmit = form.handleSubmit(async (values) => {
           @submit="onSubmit"
         />
       </div>
-      <SetupPreview :code="generatedCode" />
     </div>
   </div>
 </template>

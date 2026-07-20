@@ -1,26 +1,18 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { createRouter, createWebHistory } from 'vue-router'
-import DashboardPage from '../views/DashboardPage.vue'
 import { getWebConfig } from '../web-config.ts'
 
 const routes: readonly RouteRecordRaw[] = [
   {
     path: '/',
     name: 'dashboard',
-    component: DashboardPage,
-    meta: { title: '项目概览', scroll: true },
+    component: () => import('../views/WorkspacePage.vue'),
   },
   {
     path: '/translations',
     name: 'translations',
     component: () => import('../views/WorkspacePage.vue'),
     meta: { title: '翻译工作台' },
-  },
-  {
-    path: '/trash',
-    name: 'trash',
-    component: () => import('../views/TrashPage.vue'),
-    meta: { title: '最近删除' },
   },
   // {
   //   path: "/quality",

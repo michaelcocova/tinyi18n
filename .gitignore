@@ -33,3 +33,6 @@ components.d.ts
 *.test.ts
 .tinyi18n
 .turbo
+.tinyi18n-*
+packages/studio/scripts/.tinyi18n-*
+packages/studio/scripts/data.json

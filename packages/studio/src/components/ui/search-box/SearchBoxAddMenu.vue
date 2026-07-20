@@ -14,8 +14,12 @@ import { useSearchBoxStore } from './useSearchBox'
 
 const props = withDefaults(defineProps<{
   modelValue?: SearchBoxModelValue
+  excludeFields?: string[]
+  editingValue?: any
 }>(), {
   modelValue: () => ({}),
+  excludeFields: () => [],
+  editingValue: undefined,
 })
 
 const emit = defineEmits<{
@@ -26,6 +30,9 @@ const { addBtnState, schemas, onActiveSchema, clearActiveSchema, activeSchema } 
 
 const visibleSchemas = computed(() =>
   schemas.value.filter((item) => {
+    if (props.excludeFields.includes(item.field)) {
+      return false
+    }
     if (item.repeatable === true) {
       return true
     }
@@ -137,7 +144,7 @@ function handleSchemaSelect(schema: SearchBoxSchema) {
         >
           <template #default="slotProps">
             <slot
-              v-bind="slotProps"
+              v-bind="{ ...slotProps, value: props.editingValue, modelValue: props.modelValue }"
             />
           </template>
         </CustomContent>

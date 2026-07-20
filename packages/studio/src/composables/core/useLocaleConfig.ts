@@ -1,10 +1,10 @@
 import { createGlobalState } from '@vueuse/core'
 import { computed } from 'vue'
 import { getLanguageLabel } from '../../constants/language.ts'
-import { useDataCenter } from '../data-center/useDataCenter.ts'
+import { useWorkspace } from '../workspace/useWorkspace.ts'
 
 export const useLocaleConfig = createGlobalState(() => {
-  const { config } = useDataCenter()
+  const { config } = useWorkspace()
 
   const localeConfig = computed(() => {
     // CLI 的 resolved config 里 locale 只有 code/filename；

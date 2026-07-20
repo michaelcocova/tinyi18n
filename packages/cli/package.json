@@ -44,6 +44,7 @@
     "commander": "^13.1.0",
     "cross-spawn": "^7.0.6",
     "jiti": "^2.7.0",
+    "js-yaml": "^5.2.1",
     "kolorist": "^1.8.0",
     "lowdb": "^7.0.1",
     "prompts": "^2.4.2"

@@ -10,7 +10,6 @@ function parsePortOption(value: string) {
       'port must be an integer between 1 and 65535',
     )
   }
-
   return port
 }
 

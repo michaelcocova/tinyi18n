@@ -65,14 +65,23 @@ declare global {
     label: string
   }
 
+  export interface TinyI18nNamespaceConfig {
+    key: string
+    description?: string
+    filename: string
+  }
+
   export interface TinyI18nEntryConfig {
     dir: string
-    namespaces?: string[]
+    namespace?: string | string[]
+    paths?: string[]
   }
 
   export interface TinyI18nConfig {
     dir?: string
     filename?: string
+    mode?: 'single' | 'multi'
+    namespaces?: TinyI18nNamespaceConfig[]
     locales: TinyI18nLocaleConfig[]
     defaultLocale?: string
     entries?: TinyI18nEntryConfig[]
@@ -83,7 +92,26 @@ declare global {
     initialized: boolean
     config: TinyI18nConfig
     languages: string[]
+    namespaces?: TinyI18nNamespaceConfig[]
+    namespaceItems: Record<string, {
+      key: string
+      description?: string
+      filename: string
+      items: TinyI18nItem[]
+      groups: TinyI18nGroup[]
+      messages: TinyI18nMessage[]
+    }>
+    namespaceMessages: Record<string, TinyI18nMessage[]>
     items: TinyI18nItem[]
+    error?: string
+  }
+
+  export interface TinyI18nDataResponse {
+    root: string
+    initialized: boolean
+    config: TinyI18nConfig
+    languages: string[]
+    namespaces?: TinyI18nNamespaceConfig[]
     error?: string
   }
 

@@ -16,12 +16,23 @@
   "scripts": {
     "build": "turbo run build",
     "commit": "cz",
-    "dev": "turbo run dev",
+    "dev": "TINYI18N_MODE=development turbo run dev",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "format": "prettier --write \"**/*.{ts,js,vue,json,md}\"",
     "release": "bumpp -r --commit \"chore: release v%s\" --push --tag",
-    "prepare": "simple-git-hooks"
+    "prepare": "simple-git-hooks",
+    "tinyi18n": "node ./scripts/tinyi18n.mjs",
+    "transform": "node ./packages/studio/scripts/transform.mjs"
+  },
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-git"
+    }
+  },
+  "dependencies": {
+    "@hocuspocus/provider": "^4.3.0",
+    "yjs": "^13.6.31"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",
@@ -42,10 +53,5 @@
     "typescript": "^5.9.3",
     "unplugin-unused": "^0.5.7",
     "unrun": "^0.3.1"
-  },
-  "config": {
-    "commitizen": {
-      "path": "node_modules/cz-git"
-    }
   }
 }

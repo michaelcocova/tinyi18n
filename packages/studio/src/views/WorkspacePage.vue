@@ -1,53 +1,27 @@
 <script setup lang="ts">
-import { markRaw, onBeforeUnmount, onMounted, watch } from 'vue'
-import { useDataCenter } from '@/composables/data-center/useDataCenter'
-import { useTranslations } from '@/composables/message/useTranslations'
-import MessagesActionsBar from '../components/workspace/MessagesActionsBar.vue'
-import { toast } from '../utils/toast.ts'
+import { useWorkspaceView } from './workspace/useWorkspace'
+import WorkspaceDetailView from './workspace/WorkspaceDetailView.vue'
+import WorkspaceTreeView from './workspace/WorkspaceTreeView.vue'
 
-const { load } = useDataCenter()
-const { checkedIds } = useTranslations()
-const messagesActionsToastId = 'workspace-messages-actions'
-
-onMounted(() => {
-  void load()
-})
-
-watch(checkedIds, (ids) => {
-  if (ids.size) {
-    toast.custom(markRaw(MessagesActionsBar), {
-      id: messagesActionsToastId,
-      position: 'bottom-center',
-      duration: Number.POSITIVE_INFINITY,
-    })
-  }
-  else {
-    toast.dismiss()
-  }
-})
-onBeforeUnmount(() => {
-  toast.dismiss(messagesActionsToastId)
-})
+const workspace = useWorkspaceView()
 </script>
 
 <template>
-  <div class="flex h-full flex-col overflow-hidden text-xs">
-    <WorkspaceToolbar />
-
-    <ResizablePanelGroup
-      class="flex-1"
-      direction="horizontal"
+  <ResizablePanelGroup
+    direction="horizontal"
+    class="h-full overflow-hidden "
+  >
+    <ResizablePanel
+      size-unit="px"
+      :default-size="300"
+      :min-size="260"
+      :max-size="480"
     >
-      <ResizablePanel
-        :min-size="40"
-        class="relative h-full"
-      >
-        <WorkspaceMessageList class="p-3" />
-      </ResizablePanel>
-      <ResizableHandle with-handle />
-      <ResizablePanel :min-size="40">
-        <WorkspaceDetailPanel />
-      </ResizablePanel>
-    </ResizablePanelGroup>
-  </div>
+      <WorkspaceTreeView :workspace="workspace" />
+    </ResizablePanel>
+    <ResizableHandle with-handle />
+    <ResizablePanel size-unit="px">
+      <WorkspaceDetailView :workspace="workspace" />
+    </ResizablePanel>
+  </ResizablePanelGroup>
 </template>

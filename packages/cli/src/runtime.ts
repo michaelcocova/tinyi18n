@@ -1,6 +1,7 @@
 import type { Buffer } from 'node:buffer'
 import type { ChildProcess } from 'node:child_process'
 import type { StartupInfo, TinyI18nMode } from './types.ts'
+import { existsSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import process from 'node:process'
 
@@ -35,7 +36,19 @@ function pipeErrorLogs(child: ChildProcess) {
 export function resolveRuntimeMode(
   env: NodeJS.ProcessEnv = process.env,
 ): TinyI18nMode {
-  return env.NODE_ENV === 'development' ? 'development' : 'production'
+  if (env.TINYI18N_MODE === 'development' || env.TINYI18N_MODE === 'production') {
+    return env.TINYI18N_MODE
+  }
+
+  if (env.NODE_ENV === 'development') {
+    return 'development'
+  }
+
+  const studioPackageRoot = resolve(resolveCliPackageRoot(), '../studio')
+  const hasLocalStudioSource = existsSync(resolve(studioPackageRoot, 'package.json'))
+    && existsSync(resolve(studioPackageRoot, 'vite.config.ts'))
+
+  return hasLocalStudioSource ? 'development' : 'production'
 }
 
 function resolveCliPackageRoot() {

@@ -91,6 +91,9 @@ const config = {
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    port: 1772,
+  },
 } as const
 
 export default defineConfig(config as any)

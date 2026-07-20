@@ -2,6 +2,7 @@ import type { TinyI18nResolvedConfig } from './config.ts'
 
 export interface TinyI18nGroup {
   id: string
+  namespace?: string
   parent?: string
   type: 'group'
   key: string
@@ -11,6 +12,7 @@ export interface TinyI18nGroup {
 
 export interface TinyI18nMessage {
   id: string
+  namespace?: string
   parent?: string
   type: 'message'
   key: string
@@ -22,8 +24,22 @@ export type TinyI18nItem = TinyI18nGroup | TinyI18nMessage
 
 export interface TinyI18nDataFile {
   version?: number
+  key?: string
+  description?: string
   items: TinyI18nItem[]
   trash?: TinyI18nItem[]
+}
+
+export interface TinyI18nNamespaceSummary {
+  key: string
+  description?: string
+  filename?: string
+}
+
+export interface TinyI18nNamespaceBucket extends TinyI18nNamespaceSummary {
+  items: TinyI18nItem[]
+  groups: TinyI18nGroup[]
+  messages: TinyI18nMessage[]
 }
 
 export type TinyI18nOperation
@@ -74,6 +90,40 @@ export interface TinyI18nSnapshot {
   initialized: boolean
   config: TinyI18nResolvedConfig
   languages: string[]
+  namespaces?: TinyI18nNamespaceSummary[]
+  namespaceItems: Record<string, TinyI18nNamespaceBucket>
+  namespaceMessages: Record<string, TinyI18nMessage[]>
+  items: TinyI18nItem[]
+  error?: string
+}
+
+export interface TinyI18nDataResponse {
+  root: string
+  initialized: boolean
+  config: TinyI18nResolvedConfig
+  languages: string[]
+  namespaces?: TinyI18nNamespaceSummary[]
+  error?: string
+}
+
+export interface TinyI18nTranslationsQuery {
+  namespace?: string
+  keywords?: string
+  missing: {
+    translation?: true | string
+    key?: boolean
+  }
+  include: string[]
+  exclude: string[]
+}
+
+export interface TinyI18nTranslationsResponse {
+  root: string
+  initialized: boolean
+  config: TinyI18nResolvedConfig
+  languages: string[]
+  namespaces: TinyI18nNamespaceSummary[]
+  query: TinyI18nTranslationsQuery
   items: TinyI18nItem[]
   error?: string
 }

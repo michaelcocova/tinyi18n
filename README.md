@@ -66,7 +66,7 @@ export default defineConfig({
 ## ✨ 核心特性
 
 - **Web Studio**: 内置现代化且功能丰富的 Web UI 界面，提供树状图/表格视图来编辑词条。
-- **配置即代码**: 采用 `.tinyi18n/config.ts` 进行配置，支持 TypeScript 类型提示。
+- **配置文件**: 采用 `.tinyi18n/config.json` 进行配置。
 - **多入口同步**: 除了生成纯 JSON 文件外，还能配置生成 JS/TS 文件，方便在前端源码中直接导入使用。
 - **自动检测与无缝接入**: 无需复杂的配置即可跑起来，对现有基于 JSON 存储的多语言项目有极好的兼容性。
 

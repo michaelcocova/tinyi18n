@@ -2,22 +2,22 @@
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Toaster } from 'vue-sonner'
-import { useDataCenter } from './composables/data-center/useDataCenter'
+import { useWorkspace } from './composables/workspace/useWorkspace'
 import SetupPage from './views/setup/SetupPage.vue'
 import 'vue-sonner/style.css'
 
 const route = useRoute()
-const { state, load } = useDataCenter()
+const { state, refreshAll } = useWorkspace()
 const currentPageTitle = computed(() =>
   String(route.meta.title ?? 'TinyI18n Studio'),
 )
-
+// useCollaboration()
 function refreshWorkspaceData() {
-  void load(true)
+  void refreshAll(true)
 }
 
 onMounted(() => {
-  void load()
+  void refreshAll()
 })
 </script>
 
@@ -30,7 +30,7 @@ onMounted(() => {
 
   <!-- Loading State -->
   <div
-    v-if="!state.hasLoaded"
+    v-if="!state.hasBootstrapped"
     class="flex h-screen w-full items-center justify-center bg-white"
   >
     <div
@@ -38,12 +38,12 @@ onMounted(() => {
     />
   </div>
 
-  <!-- 拦截未初始化状态：如果没有 config.ts，或者没有对应的 data.json 数据文件，就判定为未配置好，强制进入 Init 表单页 -->
-  <SetupPage v-else-if="state.snapshot && !state.snapshot.initialized" />
+  <!-- 拦截未初始化状态：如果没有 config.json，或者没有对应的 data.json 数据文件，就判定为未配置好，强制进入 Init 表单页 -->
+  <SetupPage v-else-if="state.bootstrap && !state.initialized" />
 
   <!-- Error State (Other than not initialized) -->
   <div
-    v-else-if="state.error"
+    v-else-if="state.bootstrapError"
     class="flex h-screen w-full items-center justify-center bg-white p-4"
   >
     <div class="max-w-md text-center">
@@ -51,7 +51,7 @@ onMounted(() => {
         无法加载工作区
       </h2>
       <p class="mt-2 text-sm text-zinc-500">
-        {{ state.error || state.snapshot?.error || "未知错误" }}
+        {{ state.bootstrapError || "未知错误" }}
       </p>
       <Button
         class="mt-4"
@@ -63,29 +63,25 @@ onMounted(() => {
   </div>
 
   <!-- Main App -->
-  <SidebarProvider
+  <div
     v-else
-    :default-open="false"
-    class="h-svh overflow-hidden fixed inset-0"
+    class="h-svh flex flex-col divide-y"
   >
-    <AppSidebar />
-    <SidebarInset class="h-full overflow-hidden flex flex-col m-0 divide-y">
-      <AppHeader
-        :current-page-title="currentPageTitle"
-        @refresh="refreshWorkspaceData"
-      />
-      <template v-if="route?.meta?.scroll">
-        <ScrollArea class="flex-1 overflow-hidden [&>div]:p-4">
-          <RouterView />
-        </ScrollArea>
-      </template>
-      <div
-        v-else
-        class="flex-1 overflow-hidden"
-      >
+    <AppHeader
+      :current-page-title="currentPageTitle"
+      @refresh="refreshWorkspaceData"
+    />
+    <template v-if="route?.meta?.scroll">
+      <ScrollArea class="flex-1 overflow-hidden [&>div]:p-4">
         <RouterView />
-      </div>
-      <AppFooter />
-    </SidebarInset>
-  </SidebarProvider>
+      </ScrollArea>
+    </template>
+    <div
+      v-else
+      class="flex-1 rounded-md overflow-hidden"
+    >
+      <RouterView />
+    </div>
+    <AppFooter />
+  </div>
 </template>

@@ -7,7 +7,7 @@ import type {
 
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
-import { readWorkspaceSnapshot } from './workspace.ts'
+import { readWorkspaceSnapshot } from './workspace/index.ts'
 
 export type TinyI18nSyncResult
   = | {
@@ -106,11 +106,17 @@ function createSyncPlan(snapshot: TinyI18nSnapshot) {
     (item): item is TinyI18nMessage => item.type === 'message',
   )
   const skipped: TinyI18nSyncSkippedItem[] = []
-  const syncableMessages: Array<{ message: TinyI18nMessage, path: string[] }>
+  const syncableMessages: Array<{
+    message: TinyI18nMessage
+    namespace: string
+    path: string[]
+    fullPath: string
+  }>
     = []
 
   for (const message of messages) {
     const path = resolveMessagePath(message, itemsById)
+    const namespace = String(message.namespace ?? '').trim()
 
     // resolveMessagePath 已经 trim 过，但这里仍然二次防御
     if (path.some(segment => !String(segment ?? '').trim())) {
@@ -122,11 +128,16 @@ function createSyncPlan(snapshot: TinyI18nSnapshot) {
       continue
     }
 
-    syncableMessages.push({ message, path })
+    syncableMessages.push({
+      message,
+      namespace,
+      path,
+      fullPath: path.join('.'),
+    })
   }
 
   syncableMessages.sort((left, right) =>
-    left.path.join('.').localeCompare(right.path.join('.')),
+    `${left.namespace}:${left.fullPath}`.localeCompare(`${right.namespace}:${right.fullPath}`),
   )
 
   return {
@@ -136,7 +147,11 @@ function createSyncPlan(snapshot: TinyI18nSnapshot) {
 }
 
 function createLocalePayload(
-  syncableMessages: Array<{ message: TinyI18nMessage, path: string[] }>,
+  syncableMessages: Array<{
+    message: TinyI18nMessage
+    path: string[]
+    outputPath: string[]
+  }>,
   locale: string,
 ) {
   const payload: Record<string, unknown> = {}
@@ -144,7 +159,7 @@ function createLocalePayload(
   for (const entry of syncableMessages) {
     setNestedValue(
       payload,
-      entry.path,
+      entry.outputPath,
       entry.message.translations[locale] ?? '',
       locale,
     )
@@ -155,16 +170,53 @@ function createLocalePayload(
 
 function createEntrySyncPlan(
   config: TinyI18nResolvedConfig,
-  syncableMessages: Array<{ message: TinyI18nMessage, path: string[] }>,
+  syncableMessages: Array<{
+    message: TinyI18nMessage
+    namespace: string
+    path: string[]
+    fullPath: string
+  }>,
 ) {
+  const isMultiMode = config.mode === 'multi'
+
   return (config.entries ?? []).map((entry) => {
-    // If paths is empty, it means all messages should be synced to this entry
-    const entryMessages
-      = !entry.paths || entry.paths.length === 0
-        ? syncableMessages
-        : syncableMessages.filter(item =>
-            new Set(entry.paths).has(item.path[0]),
-          )
+    const rawNamespaces = entry.namespaces
+    const entryNamespaces = Array.isArray(rawNamespaces)
+      ? rawNamespaces
+      : rawNamespaces != null
+        ? [rawNamespaces]
+        : []
+    const configuredNamespaces = entryNamespaces
+      .map(item => String(item ?? '').trim())
+      .filter(Boolean)
+    const configuredPaths = Array.isArray(entry.paths)
+      ? entry.paths.map(item => String(item ?? '').trim()).filter(Boolean)
+      : []
+
+    const activeNamespaces = isMultiMode ? configuredNamespaces : []
+    const activePaths = configuredPaths
+    const includePaths = activePaths.filter(p => !p.startsWith('!'))
+    const excludePaths = activePaths.filter(p => p.startsWith('!')).map(p => p.slice(1))
+    // 单命名空间模式下，去掉命名空间前缀再匹配 paths
+    const toSearchPath = (item: any) => isMultiMode
+      ? item.fullPath
+      : item.path.slice(1).join('.')
+
+    const entryMessages = syncableMessages.filter((item) => {
+      const matchedNamespace = activeNamespaces.length === 0
+        || activeNamespaces.includes(item.namespace)
+      const sp = toSearchPath(item)
+      const matchedPath = activePaths.length === 0
+        || (
+          (includePaths.length === 0 || includePaths.some(path => sp === path || sp.startsWith(`${path}.`)))
+          && !excludePaths.some(path => sp === path || sp.startsWith(`${path}.`))
+        )
+
+      return matchedNamespace && matchedPath
+    }).map(item => ({
+      ...item,
+      outputPath: isMultiMode ? item.path : item.path.slice(1),
+    }))
 
     return {
       entry,
@@ -220,7 +272,7 @@ export async function syncWorkspaceToProjectFiles(
         snapshot.config.locales.map(async (locale) => {
           // Prevent empty dir from causing absolute path like "/zh-CN.json"
           const baseDir = entry.dir ? entry.dir : '.'
-          const filename = `${baseDir}/${locale.filename || `${locale.code}.json`}`
+          const filename = `${baseDir}/${locale.file || locale.filename || `${locale.code}.json`}`
           return writeLocaleFile(
             projectRoot,
             filename,
