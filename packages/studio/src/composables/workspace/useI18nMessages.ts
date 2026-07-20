@@ -4,9 +4,7 @@ import type {
   In18WorkerInput,
   In18WorkerOutput,
 } from '../../workers/i18n-messages.worker'
-import { useWebWorker } from '@vueuse/core'
-
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, onUnmounted, ref, shallowRef, watch } from 'vue'
 
 export type Recordable = Record<string, any>
 
@@ -64,8 +62,13 @@ function splitChain(chain: string) {
 }
 
 export function useI18nMessages(data: Ref<In18WorkerInput>): useIn18MessageReturn {
-  const workerUrl = new URL('../../workers/i18n-messages.worker.ts', import.meta.url).toString()
-  const { data: workerData, post } = useWebWorker<In18WorkerOutput>(workerUrl, { type: 'module' })
+  const rawWorker = new Worker(new URL('../../workers/i18n-messages.worker.ts', import.meta.url), { type: 'module' })
+  const workerData = ref<In18WorkerOutput>()
+  rawWorker.onmessage = (event: MessageEvent<In18WorkerOutput>) => {
+    workerData.value = event.data
+  }
+  const post = (input: In18WorkerInput) => rawWorker.postMessage(input)
+  onUnmounted(() => rawWorker.terminate())
 
   // viewState（主线程）
   const expandedSet = shallowRef(new Set<string>())
