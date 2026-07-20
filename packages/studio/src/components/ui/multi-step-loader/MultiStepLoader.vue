@@ -1,81 +1,83 @@
 <script setup lang="ts">
-import { cn } from "@inspira-ui/plugins";
-import { onUnmounted, ref, watch } from "vue";
+import { onUnmounted, ref, watch } from 'vue'
+import { cn } from '@/utils/tailwind'
 
 interface Step {
-  text: string; // Display text for the step
-  afterText?: string; // Text to show after step completion
-  async?: boolean; // If true, waits for external trigger to proceed
-  duration?: number; // Duration in ms before proceeding (default: 2000)
-  action?: () => void; // Function to execute when step is active
+  text: string // Display text for the step
+  afterText?: string // Text to show after step completion
+  async?: boolean // If true, waits for external trigger to proceed
+  duration?: number // Duration in ms before proceeding (default: 2000)
+  action?: () => void // Function to execute when step is active
 }
 interface Props {
-  steps: Step[];
-  loading?: boolean;
-  defaultDuration?: number;
-  preventClose?: boolean;
+  steps: Step[]
+  loading?: boolean
+  defaultDuration?: number
+  preventClose?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
   defaultDuration: 1500,
   preventClose: false,
-});
+})
 
 const emit = defineEmits<{
-  "state-change": [number];
-  complete: [];
-  close: [];
-}>();
+  stateChange: [number]
+  complete: []
+  close: []
+}>()
 
-const currentState = ref(0);
-const stepStartTime = ref(Date.now());
-const isLastStepComplete = ref(false);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let currentTimer: any = null;
+const currentState = ref(0)
+const stepStartTime = ref(Date.now())
+const isLastStepComplete = ref(false)
+let currentTimer: any = null
 
 async function executeStepAction(step: Step) {
-  if (typeof step.action === "function") {
-    await step.action();
+  if (typeof step.action === 'function') {
+    await step.action()
   }
 }
 
 async function proceedToNextStep() {
-  const currentStep = props.steps[currentState.value];
-  if (!currentStep) return;
+  const currentStep = props.steps[currentState.value]
+  if (!currentStep)
+    return
 
   // Execute the current step's action
-  await executeStepAction(currentStep);
+  await executeStepAction(currentStep)
 
   if (currentState.value < props.steps.length - 1) {
-    currentState.value++;
-    stepStartTime.value = Date.now();
-    emit("state-change", currentState.value);
-    processCurrentStep();
-  } else {
-    isLastStepComplete.value = true;
-    emit("complete");
+    currentState.value++
+    stepStartTime.value = Date.now()
+    emit('stateChange', currentState.value)
+    processCurrentStep()
+  }
+  else {
+    isLastStepComplete.value = true
+    emit('complete')
   }
 }
 
 async function processCurrentStep() {
   if (currentTimer) {
-    clearTimeout(currentTimer);
+    clearTimeout(currentTimer)
   }
 
-  const currentStep = props.steps[currentState.value];
-  if (!currentStep) return;
+  const currentStep = props.steps[currentState.value]
+  if (!currentStep)
+    return
 
-  const duration = currentStep.duration || props.defaultDuration;
+  const duration = currentStep.duration || props.defaultDuration
 
   if (!currentStep.async) {
     currentTimer = setTimeout(() => {
-      proceedToNextStep();
-    }, duration);
+      proceedToNextStep()
+    }, duration)
   }
 }
 
 function close() {
-  emit("close");
+  emit('close')
 }
 
 // Watch for changes in the async property
@@ -84,36 +86,38 @@ watch(
   async (isAsync, oldIsAsync) => {
     // Only proceed if changing from async to non-async
     if (isAsync === false && oldIsAsync === true) {
-      const currentStep = props.steps[currentState.value];
-      if (!currentStep) return;
+      const currentStep = props.steps[currentState.value]
+      if (!currentStep)
+        return
 
-      const duration = currentStep.duration || props.defaultDuration;
+      const duration = currentStep.duration || props.defaultDuration
       currentTimer = setTimeout(() => {
-        proceedToNextStep();
-      }, duration);
+        proceedToNextStep()
+      }, duration)
     }
   },
-);
+)
 
 watch(
   () => props.loading,
   (newLoading) => {
     if (newLoading) {
-      currentState.value = 0;
-      stepStartTime.value = Date.now();
-      isLastStepComplete.value = false;
-      processCurrentStep();
-    } else if (currentTimer) {
-      clearTimeout(currentTimer);
+      currentState.value = 0
+      stepStartTime.value = Date.now()
+      isLastStepComplete.value = false
+      processCurrentStep()
+    }
+    else if (currentTimer) {
+      clearTimeout(currentTimer)
     }
   },
-);
+)
 
 onUnmounted(() => {
   if (currentTimer) {
-    clearTimeout(currentTimer);
+    clearTimeout(currentTimer)
   }
-});
+})
 </script>
 
 <template>
@@ -174,8 +178,8 @@ onUnmounted(() => {
               <!--  check-circle-solid-heroicons -->
               <svg
                 v-if="
-                  index < currentState ||
-                  (index === steps.length - 1 && index === currentState && isLastStepComplete)
+                  index < currentState
+                    || (index === steps.length - 1 && index === currentState && isLastStepComplete)
                 "
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -235,11 +239,11 @@ onUnmounted(() => {
                 >
                   <span
                     v-if="
-                      step.afterText &&
-                      (index < currentState ||
-                        (index === steps.length - 1 &&
-                          index === currentState &&
-                          isLastStepComplete))
+                      step.afterText
+                        && (index < currentState
+                          || (index === steps.length - 1
+                            && index === currentState
+                            && isLastStepComplete))
                     "
                     class="mt-1 text-sm text-gray-500 dark:text-gray-400"
                   >

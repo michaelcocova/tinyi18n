@@ -87,19 +87,6 @@ export interface In18WorkerOutput {
   descendantMessageIdsByGroupId: Record<string, string[]>
 }
 
-const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz-'
-
-function nanoid(size = 12) {
-  const bytes = new Uint8Array(size)
-
-  crypto.getRandomValues(bytes)
-  let id = ''
-  for (let i = 0; i < size; i++) {
-    id += ALPHABET[bytes[i] % ALPHABET.length]
-  }
-  return id
-}
-
 function isRecord(value: unknown): value is Recordable {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }

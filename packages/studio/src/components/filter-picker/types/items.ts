@@ -73,7 +73,7 @@ export type InferFilterPickerExternalValue<TItem extends FilterPickerItem = Filt
       : TItem extends FilterPickerSelect ? FilterPickerOptionValue
         : TItem extends FilterPickerCheckbox ? FilterPickerOptionValue[]
           : TItem extends FilterPickerTags ? string[]
-          : unknown
+            : unknown
 
 /** 根据 items 推导对外 modelValue 形状。 */
 export type InferFilterPickerExternalModel<TItems extends readonly FilterPickerItem[]> = {

@@ -37,7 +37,10 @@ function handleUpdate(value: string | number) {
       @update:model-value="handleUpdate"
       @keydown.enter="emits('commit')"
     />
-    <InputGroupAddon align="inline-end" @click="emits('commit')">
+    <InputGroupAddon
+      align="inline-end"
+      @click="emits('commit')"
+    >
       <CornerDownLeft />
     </InputGroupAddon>
   </InputGroup>

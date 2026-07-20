@@ -78,6 +78,7 @@ const hasDefaultValueInModel = computed(() => {
 const hasDefaultValueInRenderItems = computed(() => {
   if (!defaultField.value)
     return false
+  // eslint-disable-next-line ts/no-use-before-define
   return renderItems.value.some(item => item.field === defaultField.value)
 })
 
@@ -121,6 +122,13 @@ const editing = ref<null | {
   value: string
 }>(null)
 
+const schemaMap = computed(() => {
+  const map = new Map<string, SearchBoxSchema>()
+  for (const schema of props.items ?? []) {
+    map.set(schema.field, schema)
+  }
+  return map
+})
 const editingValueForPanel = computed(() => {
   if (!editing.value)
     return undefined
@@ -250,14 +258,6 @@ function createId() {
 function toKey(field: string, value: string) {
   return `${field}::${value}`
 }
-
-const schemaMap = computed(() => {
-  const map = new Map<string, SearchBoxSchema>()
-  for (const schema of props.items ?? []) {
-    map.set(schema.field, schema)
-  }
-  return map
-})
 
 const renderItems = ref<RenderItem[]>([])
 

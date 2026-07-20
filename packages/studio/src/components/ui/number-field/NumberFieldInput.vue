@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue"
-import { NumberFieldInput } from "reka-ui"
+import type { HTMLAttributes } from 'vue'
+import { NumberFieldInput } from 'reka-ui'
 import { cn } from '@/utils/tailwind'
 
 const props = defineProps<{
-  class?: HTMLAttributes["class"]
+  class?: HTMLAttributes['class']
 }>()
 </script>
 

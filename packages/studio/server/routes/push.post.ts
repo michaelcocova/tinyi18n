@@ -1,5 +1,6 @@
 import type { Operation } from 'fast-json-patch'
 import type { TinyI18nItem } from '../../../cli/src/core/message.ts'
+// @ts-ignore
 import { randomBytes } from 'node:crypto'
 import jsonPatch from 'fast-json-patch'
 import { defineEventHandler, readBody } from 'nitro/h3'
@@ -137,7 +138,8 @@ export default defineEventHandler(async (event) => {
     const childMap = new Map<string | undefined, TinyI18nItem[]>()
     for (const it of nsFile.items) {
       const bucket = childMap.get(it.parent) ?? []
-      bucket.push(it); childMap.set(it.parent, bucket)
+      bucket.push(it)
+      childMap.set(it.parent, bucket)
     }
     function buildTree(pid: string | undefined): any[] {
       return (childMap.get(pid) ?? []).map((ch) => {

@@ -257,7 +257,7 @@ async function main() {
 
   // ─── 写入数据 ──────────────────────────────────────
   if (isSimple && simpleNs) {
-    const target = Object.entries(nsRoots).find(([id, ns]) => ns.node.key === simpleNs)
+    const target = Object.entries(nsRoots).find(([_id, ns]) => ns.node.key === simpleNs)
     if (!target)
       throw new Error(`Namespace "${simpleNs}" not found`)
     const [targetId, targetNs] = target
@@ -396,7 +396,7 @@ async function main() {
       }
     }
 
-    let config = {
+    const config = {
       mode: 'multi',
       defaultLocale: sortedLocales.includes('zh-CN') ? 'zh-CN' : sortedLocales[0],
       namespaces: Object.keys(nsRoots).map(nsId => ({

@@ -29,4 +29,3 @@ export default defineEventHandler(async (event) => {
     workspaceDir: result.workspaceDir,
   }
 })
-

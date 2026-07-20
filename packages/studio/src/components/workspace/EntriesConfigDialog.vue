@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronDown, Plus, Settings2, Trash2 } from '@lucide/vue'
+import { ChevronDown, Plus, Settings2 } from '@lucide/vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useFieldArray, useForm } from 'vee-validate'
 import { computed, ref, watch } from 'vue'
@@ -67,7 +67,7 @@ const form = useForm({
   },
 })
 
-const { fields: customEntries, push: addEntry, remove: removeEntry } = useFieldArray('entries')
+const { fields: customEntries, push: addEntry } = useFieldArray('entries')
 
 function parsePaths(val: string | number) {
   if (!val) {

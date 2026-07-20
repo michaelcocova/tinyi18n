@@ -17,7 +17,7 @@ function buildTisfItems(items: TinyI18nItem[]): any[] {
   }
 
   function walk(pid: string | undefined): any[] {
-    return (childMap.get(pid) ?? []).map(child => {
+    return (childMap.get(pid) ?? []).map((child) => {
       if (child.type === 'message') {
         const tls: Record<string, string> = {}
         for (const [k, v] of Object.entries(child.translations ?? {})) {
@@ -51,10 +51,10 @@ export interface WorkspacePullItem {
 export default defineEventHandler(async (): Promise<WorkspacePullItem[]> => {
   const projectRoot = getProjectRoot()
   const { config, targets } = await resolveWorkspaceContext(projectRoot)
-const namespaceFiles = await loadWorkspaceNamespaceItems(projectRoot, targets, config?.locales?.map((l: any) => l.code) ?? [])
+  const namespaceFiles = await loadWorkspaceNamespaceItems(projectRoot, targets, config?.locales?.map((l: any) => l.code) ?? [])
 
   const isSingle = config?.mode === 'single'
-  return namespaceFiles.map(nf => {
+  return namespaceFiles.map((nf) => {
     const ns = nf.target.namespace ?? 'default'
     const label = (nf.items.find(i => !i.parent) as any)?.title ?? ''
     const dir = isSingle
@@ -63,7 +63,7 @@ const namespaceFiles = await loadWorkspaceNamespaceItems(projectRoot, targets, c
 
     return {
       dir,
-      files: ['.skeleton.yaml', ...(config?.locales ?? []).map((l: any) => l.code + '.yaml')],
+      files: ['.skeleton.yaml', ...(config?.locales ?? []).map((l: any) => `${l.code}.yaml`)],
       data: { $code: ns, $label: label, items: buildTisfItems(nf.items) },
     }
   })

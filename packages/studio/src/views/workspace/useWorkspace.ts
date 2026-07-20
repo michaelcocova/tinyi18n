@@ -142,37 +142,6 @@ function getParentLocator(locator: string) {
   return segments.slice(0, -1).join('.')
 }
 
-function createUniqueKey(items: Array<RawTranslationNode>, base: string) {
-  let nextKey = base
-  let index = 2
-
-  const exists = (key: string) => items.some(item => item?.key === key)
-  while (exists(nextKey)) {
-    nextKey = `${base}-${index}`
-    index += 1
-  }
-
-  return nextKey
-}
-
-function compareNodeKey(a: RawTranslationNode, b: RawTranslationNode) {
-  const aWeight = isRawGroup(a) ? 0 : 1
-  const bWeight = isRawGroup(b) ? 0 : 1
-  if (aWeight !== bWeight) {
-    return aWeight - bWeight
-  }
-  return String(a.key ?? '').localeCompare(String(b.key ?? ''))
-}
-
-function insertSorted(items: Array<RawTranslationNode>, node: RawTranslationNode) {
-  let index = items.findIndex(existing => compareNodeKey(node, existing) < 0)
-  if (index < 0) {
-    index = items.length
-  }
-  items.splice(index, 0, node)
-  return index
-}
-
 /**
  * 稳定排序：group 在前，message 在后。同类型之间保持原有插入顺序。
  */
@@ -563,22 +532,26 @@ export const useWorkspaceView = createGlobalState(() => {
    * 只对 group 类型节点有效。
    */
   function createChildMessages(node: In18MessageNode, count: number = 1) {
-    if (node.type !== 'group') return
+    if (node.type !== 'group')
+      return
 
     const fileName = workspace.activeFileName.value
     const locator = node.id
-    if (!fileName || !locator) return
+    if (!fileName || !locator)
+      return
 
     toggleExpanded(node.id, true)
 
     let nextId = ''
 
     workspace.mutateFileData(fileName, (data) => {
-      if (!data || !isRecord(data)) return
+      if (!data || !isRecord(data))
+        return
       const root = data as unknown as RawTranslationFile
 
       const groupNode = getNodeByLocator(root, locator)
-      if (!groupNode || !isRawGroup(groupNode)) return
+      if (!groupNode || !isRawGroup(groupNode))
+        return
 
       const parentItems = groupNode.items
 
@@ -599,7 +572,8 @@ export const useWorkspaceView = createGlobalState(() => {
       nextId = `${locator}.${newIndex}`
     })
 
-    if (!nextId) return
+    if (!nextId)
+      return
 
     pendingSelectedId.value = nextId
     pendingDraftKeyId.value = nextId
@@ -614,16 +588,19 @@ export const useWorkspaceView = createGlobalState(() => {
   function insertSiblingGroup(node: In18MessageNode, position: 'before' | 'after') {
     const fileName = workspace.activeFileName.value
     const locator = node.id
-    if (!fileName || !locator) return
+    if (!fileName || !locator)
+      return
 
     const parentLocator = getParentLocator(locator)
     let nextId = ''
 
     workspace.mutateFileData(fileName, (data) => {
-      if (!data || !isRecord(data)) return
+      if (!data || !isRecord(data))
+        return
       const root = data as unknown as RawTranslationFile
       const ref = resolveNodeRefByLocator(root, locator)
-      if (!ref) return
+      if (!ref)
+        return
 
       const { parentItems, index } = ref
       const insertIndex = position === 'after' ? index + 1 : index
@@ -639,7 +616,8 @@ export const useWorkspaceView = createGlobalState(() => {
       nextId = parentLocator ? `${parentLocator}.${newIndex}` : String(newIndex)
     })
 
-    if (!nextId) return
+    if (!nextId)
+      return
 
     pendingSelectedId.value = nextId
     pendingDraftKeyId.value = nextId
@@ -652,20 +630,24 @@ export const useWorkspaceView = createGlobalState(() => {
    * 只对 message 类型节点有效。
    */
   function insertSiblingMessages(node: In18MessageNode, position: 'before' | 'after', count: number = 1) {
-    if (node.type !== 'message') return
+    if (node.type !== 'message')
+      return
 
     const fileName = workspace.activeFileName.value
     const locator = node.id
-    if (!fileName || !locator) return
+    if (!fileName || !locator)
+      return
 
     const parentLocator = getParentLocator(locator)
     let nextId = ''
 
     workspace.mutateFileData(fileName, (data) => {
-      if (!data || !isRecord(data)) return
+      if (!data || !isRecord(data))
+        return
       const root = data as unknown as RawTranslationFile
       const ref = resolveNodeRefByLocator(root, locator)
-      if (!ref) return
+      if (!ref)
+        return
 
       const { parentItems, index } = ref
       const insertIndex = position === 'after' ? index + 1 : index
@@ -688,7 +670,8 @@ export const useWorkspaceView = createGlobalState(() => {
       nextId = parentLocator ? `${parentLocator}.${newIndex}` : String(newIndex)
     })
 
-    if (!nextId) return
+    if (!nextId)
+      return
 
     pendingSelectedId.value = nextId
     pendingDraftKeyId.value = nextId

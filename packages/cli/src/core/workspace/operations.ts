@@ -217,4 +217,3 @@ export function applyOperation(data: TinyI18nDataFile, operation: TinyI18nOperat
     }),
   }
 }
-

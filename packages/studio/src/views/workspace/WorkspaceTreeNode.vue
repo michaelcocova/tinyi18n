@@ -35,7 +35,7 @@ const NumberInput = defineComponent({
     },
   },
   emits: {
-    'update:modelValue': (value: number) => true,
+    'update:modelValue': (_value: number) => true,
   },
   setup(props, { emit }) {
     return () => h(

@@ -5,6 +5,7 @@ import type {
   TinyI18nTranslationsQuery,
   TinyI18nTranslationsResponse,
 } from '../message.ts'
+import { join } from 'node:path'
 import {
   createEmptyWorkspaceSnapshot,
   emptyConfig,
@@ -14,7 +15,6 @@ import {
   workspaceDir,
 } from './context.ts'
 import { openWorkspaceData } from './store.ts'
-import { join } from 'node:path'
 import {
   buildNamespaceBuckets,
   buildNamespaceMessages,

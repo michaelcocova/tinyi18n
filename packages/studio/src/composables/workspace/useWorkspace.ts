@@ -28,11 +28,11 @@ function cloneJson<T>(value: T): T {
   // 我们的数据结构本身是纯 JSON，因此 JSON clone 足够稳定。
   const raw = toRaw(value) as any
   try {
-    // eslint-disable-next-line ts/no-unsafe-return
     return typeof structuredClone === 'function'
       ? structuredClone(raw)
       : JSON.parse(JSON.stringify(raw)) as T
-  } catch {
+  }
+  catch {
     return JSON.parse(JSON.stringify(raw)) as T
   }
 }
@@ -58,7 +58,8 @@ export const useWorkspace = createGlobalState(() => {
   const config = computed(() => bootstrap.value?.config)
   const namespaces = computed(() => {
     const ns = config.value?.namespaces
-    if (ns?.length) return ns
+    if (ns?.length)
+      return ns
     // 单命名空间模式，前端用固定 key
     if (config.value?.mode === 'single') {
       return [{ key: '__DEFAULT__', description: '' }]
@@ -87,7 +88,8 @@ export const useWorkspace = createGlobalState(() => {
   watch(namespaces, ensureActiveNamespace, { immediate: true })
 
   const activeFileName = computed(() => {
-    if (config.value?.mode === 'single') return '.tinyi18n/data'
+    if (config.value?.mode === 'single')
+      return '.tinyi18n/data'
     const ns = namespaces.value.find(item => item.key === activeNamespace.value)
     if (!ns?.key) {
       return ''
@@ -126,9 +128,11 @@ export const useWorkspace = createGlobalState(() => {
         bootstrap.value = data
         hasBootstrapped.value = true
         bootstrapError.value = data.error ?? ''
-      } catch (error) {
+      }
+      catch (error) {
         bootstrapError.value = error instanceof Error ? error.message : String(error)
-      } finally {
+      }
+      finally {
         isBootstrapping.value = false
         pendingBootstrap = null
       }
@@ -154,9 +158,11 @@ export const useWorkspace = createGlobalState(() => {
         files.value = Array.isArray(data) ? data : []
         hasPulled.value = true
         refreshBaselineFromFiles()
-      } catch (error) {
+      }
+      catch (error) {
         pullError.value = error instanceof Error ? error.message : String(error)
-      } finally {
+      }
+      finally {
         isPulling.value = false
         pendingPull = null
       }
