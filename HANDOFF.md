@@ -1,56 +1,52 @@
-# HANDOFF
+# HANDOFF — 数据流重构
 
-## 当前状态
+## 1. 当前任务
 
-tinyi18n 的存储格式已从旧版 JSON(TISF) 完全迁移到新版 YAML 结构。CLI 和 Studio 均编译通过。
+重构 tinyi18n studio 的数据流，把「两棵树同步（workspace + messages）」改为「单一数据源（I18nMessage[]）」。
 
-## 文件结构
+## 2. 已完成
 
-```
-.tinyi18n/
-├── config.yaml           ← 配置（locales, defaultLocale, entries）
-├── __data__.yaml         ← 树骨架（所有节点，含 file/desc/namesapce/data 头部）
-└── data/
-    ├── zh-CN.yaml        ← 拍平的 id → translation（按 id 排序）
-    └── en.yaml
-```
+### 核心改动
 
-## 已完成的改动
+- **类型更新**：`packages/studio/typings/message.d.ts` — `BasicMessage` 增加 `path?: string`，`parent` 改为 `string`
+- **新建 `packages/studio/src/utils/rebuild-paths.ts`** — `rebuildPaths()` 从 parent 链重建 path；`sortNodesByType()` 按父级分组排序（group 在前，message 在后）
+- **新建 `packages/studio/src/utils/serialize-messages.ts`** — `serializeMessages()` 从扁平 `I18nMessage[]` 反序列化回 PUT 接口格式，通过 config 确定 namespace → entryDir 映射
+- **重写 `packages/studio/src/composables/workspace/useTranslationEditor.ts`** — 全部 CRUD 按 id 操作，不再读写 `workspace`；`save` 从 `messages` 序列化
+- **更新 `packages/studio/src/composables/workspace/useAssemblyMessages.ts`** — `loadMessages()` 末尾调用 `sortNodesByType()` 确保初始排序一致性
+- **更新 `packages/studio/src/views/workspace/WorkspaceTreeView.vue`** — 去掉 `getPath`，增删改直接传 id
 
-1. `config.json` → `config.yaml` — 配置读写全部 YAML
-2. 数据文件 JSON → YAML 内容 — `tisf.ts` 所有读写函数
-3. 文件扩展名 `.json` → `.yaml` — 全局统一
-4. 清理 tisf.ts 死代码 — 删除流式解析器、`readTisfNamespaceMeta`、`streamTisfTopLevelNodes`、`collectItemsFromTisf`、`normalizeItemsToPathBasedIds` 已保留（被 `apply.ts` 使用）、`buildTisfNamespaceObject`、`buildPathId`。文件从 614 行 → 246 行
-5. `init.ts` 创建 `__data__.yaml` + data/ 目录
-6. Reader/Writer 适配新格式：
-   - `loadWorkspaceNamespaceItems` 读 `__data__.yaml` + `data/*.yaml`
-   - `writeWorkspaceNamespaceFile` 写 `__data__.yaml` + `data/*.yaml`
-   - `store.ts` 传 `projectRoot` 参数
+### 改动文件清单
 
-## 数据流
+| 文件 | 操作 |
+|---|---|
+| `packages/studio/typings/message.d.ts` | 修改 |
+| `packages/studio/src/utils/rebuild-paths.ts` | 新建 |
+| `packages/studio/src/utils/serialize-messages.ts` | 新建 |
+| `packages/studio/src/composables/workspace/useAssemblyMessages.ts` | 修改 |
+| `packages/studio/src/composables/workspace/useTranslationEditor.ts` | 重写 |
+| `packages/studio/src/views/workspace/WorkspaceTreeView.vue` | 修改 |
 
-```
-读取：__data__.yaml(树) + data/*.yaml(翻译) → 合并 → TinyI18nItem[]
-写入：TinyI18nItem[] → 拆分为树+翻译 → __data__.yaml + data/*.yaml
-初始化：config + namespaces → __data__.yaml + per-namespace 兼容文件
-```
+### 删除的 API
 
-## 依赖
+- `getPath(id)`、`getSelectedKey()`、`writeValue()`、`namespaceToDirs` — 不再需要
 
-- CLI 包: `js-yaml`
-- Studio 包: `js-yaml`
-- nanoid(11) 内联实现于 `transform.mjs` 和 `init.ts`
+### 保留的外部 API（签名不变）
 
-## 注意事项
+`updateTranslation(id, locale, value)` / `updateKey(id, newKey)` / `addMessage(parentId)` / `addGroup(parentId)` / `deleteNode(id)` / `save()` / `saveImmediate()` / `isDirty`
 
-1. `__data__.yaml` 中 `type: namespace` 在 TinyI18nItem 中转为 `type: 'group'`（类型系统无 'namespace'），通过 `parent === undefined` 区分
-2. 写入时 `type: 'group'` 且 `parent === undefined` 的项写回 `__data__.yaml` 时转为 `type: 'namespace'`
-3. `workspaceDataDir` 已导入 tisf.ts，用于构造 data/ 路径
-4. `scripts/data.json` 不在磁盘上（在 git stage 中），`transform.mjs` 暂无法运行
+## 3. 当前卡在哪
 
-## 剩余待做
+无阻塞。类型检查通过（仅剩两个与本次无关的预存 `props.node` undefined 警告）。开发服务器正常启动。
 
-1. Studio worker 适配（当前服务器 API 返回格式不变，暂不影响）
-2. 恢复 `scripts/data.json` 运行 `transform.mjs` 验证
-3. 删除 `createDefaultDataSource` 和旧的 per-namespace 文件兼容代码
-4. 清理 `_target` 参数收尾（已在函数签名中去除）
+## 4. 下一步
+
+- 可以清理 `useMessageTree.ts` 和 `flattenLocales.ts` 中多余的 `as any` 断言（path/parent 现在已在类型中）
+- 可以评估是否删除 `scheduler.ts`（增量调度器不再需要）
+- `serializeMessages.ts` 中 `ConfigEntry` 是局部定义，如果今后与 `useLocalesStore` 中的定义不同步需要统一
+
+## 5. 踩过的坑 / 注意事项
+
+- **不要**再往 `workspace` 写数据。`workspace` 只读，只在初始加载时用一次。
+- `nanoid` 长度统一用 28（和 `flattenLocales` 一致）。
+- `sortNodesByType` 是 per-parent 排序，初始加载后也被调用以保证一致性。
+- `AppHeader.vue` 和 `WorkspaceDetailView.vue` 没有改，它们已经是传 id 的，不受影响。

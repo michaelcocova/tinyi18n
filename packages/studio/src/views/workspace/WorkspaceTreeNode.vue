@@ -37,6 +37,7 @@ function handleExpand() {
       <div
         :style="{ 'padding-left': `calc(var(--spacing) * 3 * ${node.depth || 0})` }"
         :data-id="node.id"
+        :data-depth="node.depth"
         :data-selected="isSelected ? 'selected' : undefined"
         class="min-h-7 font-mono cursor-pointer px-1 flex items-center gap-1 relative data-[state=open]:bg-zinc-100 data-[selected=selected]:bg-zinc-100 hover:bg-zinc-100"
         @click="handleClick"

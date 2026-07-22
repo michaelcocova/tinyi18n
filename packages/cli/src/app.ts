@@ -1,9 +1,8 @@
 import type { StartupInfo } from './types.ts'
 import { networkInterfaces } from 'node:os'
 import process from 'node:process'
-import { green, red } from 'kolorist'
 import { resolveCommand } from './commands.ts'
-import { syncWorkspaceToProjectFiles } from './core/index.ts'
+import { handleInit, handleUpdate, handleValidate } from './handlers.ts'
 import {
   formatStartupInfo,
   printIgnoredDevelopmentPortNotice,
@@ -45,17 +44,20 @@ export async function runCli(
 
   const command = resolved.command
 
-  if (command.type === 'generate') {
-    const result = await syncWorkspaceToProjectFiles(command.projectRoot)
-    if (!result.ok) {
-      console.error(red(`生成失败：${(result as any).error || '未知错误'}`))
-      process.exitCode = 1
-    } else {
-      console.log(green(`生成成功：共生成 ${result.files.length} 个文件`))
-      process.exitCode = 0
-    }
+  // 非 UI 命令直接执行后退出
+  if (command.type === 'validate') {
+    handleValidate(command.projectRoot)
     return
   }
+  if (command.type === 'init') {
+    handleInit(command.projectRoot)
+    return
+  }
+  if (command.type === 'update') {
+    await handleUpdate(command.projectRoot)
+    return
+  }
+  // --- UI 启动逻辑 ---
 
   const mode = resolveRuntimeMode()
 

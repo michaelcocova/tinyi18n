@@ -1,174 +1,127 @@
 import { useDebounceFn } from '@vueuse/core'
-import { get, set, unset } from 'lodash-es'
 import { nanoid } from 'nanoid'
+import { rebuildPaths, sortNodesByType } from '@/utils/rebuild-paths'
+import { serializeMessages } from '@/utils/serialize-messages'
 import { useAssembleMessages } from './useAssemblyMessages'
 import { useLocalesStore } from './useLocalesStore'
-import { useMessageTree } from './useMessageTree'
 
 export function useTranslationEditor() {
-  const { workspace, config } = useLocalesStore()
+  const isDirty = ref(false)
+  const { config } = useLocalesStore()
   const { messages } = useAssembleMessages()
-  const { selectedKey } = useMessageTree()
 
-  const namespaceToDirs = computed(() => {
-    const map: Record<string, string[]> = {}
-    for (const entry of config.value) {
-      for (const ns of entry.namespaces) {
-        if (!map[ns])
-          map[ns] = []
-        if (!map[ns].includes(entry.dir))
-          map[ns].push(entry.dir)
+  /** 从现有 messages 收集所有 locale */
+  function collectLocales(): string[] {
+    const set = new Set<string>()
+    for (const msg of messages.value) {
+      if (msg.type === 2 && msg.translations) {
+        for (const loc of Object.keys(msg.translations)) {
+          set.add(loc)
+        }
       }
     }
-    return map
-  })
-
-  function writeValue(key: string, locale: string, value: string): boolean {
-    const ns = key.split('.')[0]
-    const dirs = namespaceToDirs.value[ns]
-    if (!dirs?.length)
-      return false
-    for (const dir of dirs) {
-      const localeData = workspace.value[dir]?.[locale]
-      if (!localeData)
-        continue
-      set(localeData, key, value)
-    }
-    return true
+    return [...set].sort()
   }
 
-  function updateTranslation(key: string, locale: string, value: string) {
-    writeValue(key, locale, value)
-    const msg = messages.value.find((m: any) => m.path === key)
-    if (msg && msg.type === 2) {
-      msg.translations[locale] = value
-      messages.value = [...messages.value]
-    }
+  /** 按 id 更新翻译值 */
+  function updateTranslation(id: string, locale: string, value: string) {
+    isDirty.value = true
+    const msg = messages.value.find(m => m.id === id)
+    if (!msg || msg.type !== 2)
+      return
+    msg.translations[locale] = value
+    messages.value = [...messages.value]
   }
 
-  function updateKey(oldKey: string, newKey: string) {
-    if (oldKey === newKey)
+  /** 按 id 更新 key，自动重建子树 path */
+  function updateKey(id: string, newKey: string) {
+    if (!newKey)
       return
-    const ns = oldKey.split('.')[0]
-    const dirs = namespaceToDirs.value[ns]
-    if (!dirs?.length)
+    isDirty.value = true
+    const msg = messages.value.find(m => m.id === id)
+    if (!msg)
       return
-    for (const dir of dirs) {
-      for (const [locale, localeData] of Object.entries(workspace.value[dir] ?? {})) {
-        if (!localeData)
-          continue
-        const val = get(localeData, oldKey)
-        if (val === undefined)
-          continue
-        set(localeData, newKey, val)
-        unset(localeData, oldKey)
-      }
-    }
-    const msg = messages.value.find((m: any) => m.path === oldKey)
-    if (msg) {
-      const segs = newKey.split('.')
-      msg.key = segs[segs.length - 1]
-      ;(msg as any).path = newKey
-      messages.value = [...messages.value]
-    }
+    msg.key = newKey
+    rebuildPaths(messages.value)
+    messages.value = [...messages.value]
   }
 
-  function addMessage(parentPath?: string) {
-    if (!parentPath)
+  /** 在指定 group 下插入一条新 message */
+  function addMessage(parentId: string) {
+    isDirty.value = true
+    const parent = messages.value.find(m => m.id === parentId)
+    if (!parent)
       return
-    const newKey = `${parentPath}.`
-    const keyName = ''
-    const ns = parentPath.split('.')[0]
-    const dirs = namespaceToDirs.value[ns]
-    if (!dirs?.length)
-      return
-    const locales = new Set<string>()
-    for (const dir of dirs) {
-      for (const locale of Object.keys(workspace.value[dir] ?? {})) {
-        locales.add(locale)
-        set(workspace.value[dir], newKey, '')
-      }
-    }
-    const parentGroup = messages.value.find((m: any) => m.path === parentPath)
-    const msg: any = { id: nanoid(28), key: keyName, type: 2, path: newKey, translations: {} }
-    for (const locale of locales) msg.translations[locale] = ''
-    if (parentGroup)
-      msg.parent = parentGroup.id
+
+    const locales = collectLocales()
+    const translations: Record<string, string> = {}
+    for (const loc of locales) translations[loc] = ''
+
+    const msg: I18nMessage = {
+      id: nanoid(28),
+      key: '',
+      type: 2,
+      parent: parentId,
+      translations,
+    } as I18nMessage
+
     messages.value = [...messages.value, msg]
+    rebuildPaths(messages.value)
+    sortNodesByType(messages.value)
+    messages.value = [...messages.value]
   }
 
-  function addGroup(parentPath?: string) {
-    if (!parentPath)
+  /** 在指定 group 下插入一个新 group + 子 message */
+  function addGroup(parentId: string) {
+    isDirty.value = true
+    const parent = messages.value.find(m => m.id === parentId)
+    if (!parent)
       return
-    const childKey = `${parentPath}.`
-    const msgKey = `${parentPath}..`
-    const keyName = ''
-    const ns = parentPath.split('.')[0]
-    const dirs = namespaceToDirs.value[ns]
-    if (!dirs?.length)
-      return
-    const locales = new Set<string>()
-    for (const dir of dirs) {
-      for (const locale of Object.keys(workspace.value[dir] ?? {})) {
-        locales.add(locale)
-        set(workspace.value[dir], msgKey, '')
-      }
-    }
-    const parentGroup = messages.value.find((m: any) => m.path === parentPath)
-    const childGroupId = nanoid(28)
+
+    const locales = collectLocales()
+    const translations: Record<string, string> = {}
+    for (const loc of locales) translations[loc] = ''
+
+    const groupId = nanoid(28)
     const msgId = nanoid(28)
-    const childGroup: any = { id: childGroupId, key: keyName, type: 1, path: childKey }
-    if (parentGroup)
-      childGroup.parent = parentGroup.id
-    const newMsg: any = { id: msgId, key: `m__${Date.now().toString(36)}`, type: 2, path: msgKey, translations: {}, parent: childGroupId }
-    for (const locale of locales) newMsg.translations[locale] = ''
-    messages.value = [...messages.value, childGroup, newMsg]
+
+    const group: I18nMessage = {
+      id: groupId,
+      key: '',
+      type: 1,
+      parent: parentId,
+    } as I18nMessage
+    const childMsg: I18nMessage = {
+      id: msgId,
+      key: `m__${Date.now().toString(36)}`,
+      type: 2,
+      parent: groupId,
+      translations,
+    } as I18nMessage
+
+    messages.value = [...messages.value, group, childMsg]
+    rebuildPaths(messages.value)
+    sortNodesByType(messages.value)
+    messages.value = [...messages.value]
   }
 
-  function deleteNode(nodePath?: string) {
-    if (!nodePath)
-      return
-    const ns = nodePath.split('.')[0]
-    const dirs = namespaceToDirs.value[ns]
-    if (!dirs?.length)
-      return
-    for (const dir of dirs) {
-      for (const locale of Object.keys(workspace.value[dir] ?? {})) {
-        unset(workspace.value[dir], nodePath)
+  /** 删除节点及其所有后代 */
+  function deleteNode(id: string) {
+    isDirty.value = true
+    const toRemove = new Set<string>()
+    const collect = (parentId: string) => {
+      toRemove.add(parentId)
+      for (const msg of messages.value) {
+        if (msg.parent === parentId)
+          collect(msg.id)
       }
     }
-    messages.value = messages.value.filter((m: any) => {
-      return m.path !== nodePath && !m.path?.startsWith(`${nodePath}.`)
-    })
-  }
-
-  function getPath(itemId: string): string | undefined {
-    const msg = messages.value.find(m => m.id === itemId)
-    return (msg as any)?.path
-  }
-
-  function getSelectedKey(): string | undefined {
-    const msg = messages.value.find(m => m.id === selectedKey.value)
-    return (msg as any)?.path
-  }
-
-  function cleanEmptyKeys(obj: Record<string, any>) {
-    for (const k of Object.keys(obj)) {
-      if (k === '') {
-        delete obj[k]
-        continue
-      }
-      if (typeof obj[k] === 'object' && obj[k] !== null) {
-        cleanEmptyKeys(obj[k])
-        if (Object.keys(obj[k]).length === 0)
-          delete obj[k]
-      }
-    }
+    collect(id)
+    messages.value = messages.value.filter(m => !toRemove.has(m.id))
   }
 
   const save = useDebounceFn(async () => {
-    const payload = JSON.parse(JSON.stringify(workspace.value))
-    cleanEmptyKeys(payload)
+    const payload = serializeMessages(messages.value, config.value)
     const resp = await fetch('/api/locales', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -176,21 +129,23 @@ export function useTranslationEditor() {
     })
     if (!resp.ok)
       throw new Error(`保存失败: ${resp.status}`)
+    isDirty.value = false
   }, 1500)
 
   async function saveImmediate() {
+    const payload = serializeMessages(messages.value, config.value)
     const resp = await fetch('/api/locales', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(workspace.value),
+      body: JSON.stringify(payload),
     })
     if (!resp.ok)
       throw new Error(`保存失败: ${resp.status}`)
+    isDirty.value = false
   }
 
   return {
-    getPath,
-    getSelectedKey,
+    isDirty,
     updateTranslation,
     updateKey,
     addMessage,

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ChevronDown, Save, Search } from '@lucide/vue'
 import { useEventListener } from '@vueuse/core'
-
 import { useMessageTree } from '@/composables/workspace/useMessageTree'
+
 import { useTranslationEditor } from '@/composables/workspace/useTranslationEditor'
 import DropdownMenuItem from '../ui/dropdown-menu/DropdownMenuItem.vue'
 
@@ -84,7 +84,9 @@ useEventListener('keydown', blockSave, { capture: true })
         </DropdownMenu>
       </InputGroupAddon>
     </InputGroup>
-    <div class="ml-auto" />
+    <div
+      class="ml-auto "
+    />
     <Button
       variant="ghost"
       size="icon-sm"

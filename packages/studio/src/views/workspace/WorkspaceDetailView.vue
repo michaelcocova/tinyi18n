@@ -5,38 +5,29 @@ import { get } from 'lodash-es'
 import { useAssembleMessages } from '@/composables/workspace/useAssemblyMessages'
 import { useTranslationEditor } from '@/composables/workspace/useTranslationEditor'
 
-defineProps<{
+const props = defineProps<{
   node?: MessageTreeNode
 }>()
 
 const { locales } = useAssembleMessages()
-
-const { getSelectedKey, updateTranslation, updateKey, save } = useTranslationEditor()
+const { updateTranslation, updateKey, save } = useTranslationEditor()
 
 function onTranslationInput(locale: string, value: string) {
-  const key = getSelectedKey()
-  if (!key)
-    return
-  updateTranslation(key, locale, value)
+  updateTranslation(props.node.id, locale, value)
   save()
 }
 
 function onKeyInput(newKeySegment: string) {
-  const fullPath = getSelectedKey()
-  if (!fullPath)
+  // namespace 的 key 不可编辑
+  if (props.node?.original?.type === 1 && !props.node?.original?.parent)
     return
-
-  const segments = fullPath.split('.')
-  segments[segments.length - 1] = newKeySegment
-  const newFullPath = segments.join('.')
-
-  updateKey(fullPath, newFullPath)
+  updateKey(props?.node.id, newKeySegment)
   save()
 }
 </script>
 
 <template>
-  <div class="h-full overflow-auto p-6 mx-auto w-full max-w-4xl">
+  <div class="h-full overflow-auto p-6 mx-auto w-full max-w-7xl">
     <div
       v-if="!node?.id"
       class="text-sm text-zinc-400"
@@ -44,13 +35,12 @@ function onKeyInput(newKeySegment: string) {
       请选择一个节点
     </div>
     <template v-else>
-      <InputGroup
-        class="rounded-0 border-0 shadow-none rounded-none"
-      >
+      <InputGroup class="rounded-0 border-0 shadow-none rounded-none">
         <InputGroupInput
           id="textarea-code-key"
           placeholder="请输入 key"
           :model-value="get(node, ['original', 'key'], '')"
+          :readonly="node.original?.type === 1 && !node.original?.parent"
           class="flex min-h-8 bg-accent rounded-md py-2"
           @update:model-value="onKeyInput($event)"
         />

@@ -7,14 +7,26 @@ export interface TinyI18nUiCommand {
   host?: boolean | string
 }
 
-export interface TinyI18nGenerateCommand {
-  type: 'generate'
+export interface TinyI18nValidateCommand {
+  type: 'validate'
+  projectRoot: string
+}
+
+export interface TinyI18nInitCommand {
+  type: 'init'
+  projectRoot: string
+}
+
+export interface TinyI18nUpdateCommand {
+  type: 'update'
   projectRoot: string
 }
 
 export type TinyI18nCommand
   = | TinyI18nUiCommand
-    | TinyI18nGenerateCommand
+    | TinyI18nValidateCommand
+    | TinyI18nInitCommand
+    | TinyI18nUpdateCommand
 
 export interface ResolvedCommandResult {
   command?: TinyI18nCommand

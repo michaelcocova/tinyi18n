@@ -29,5 +29,3 @@ if (isCliEntry()) {
     process.exitCode = 1
   })
 }
-
-export * from './core/index.ts'

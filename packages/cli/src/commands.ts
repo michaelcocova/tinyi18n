@@ -4,7 +4,6 @@ import { Command, CommanderError, InvalidArgumentError } from 'commander'
 
 function parsePortOption(value: string) {
   const port = Number(value)
-
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new InvalidArgumentError(
       'port must be an integer between 1 and 65535',
@@ -26,10 +25,7 @@ function createProgram(
     .helpOption('-h, --help', '显示命令帮助')
     .showHelpAfterError()
     .action(() => {
-      onCommand({
-        type: 'ui',
-        projectRoot: cwd,
-      })
+      onCommand({ type: 'ui', projectRoot: cwd })
     })
 
   program
@@ -47,14 +43,24 @@ function createProgram(
     })
 
   program
-    .command('generate')
-    .alias('g')
-    .description('生成多语言词条到源码')
+    .command('validate')
+    .description('校验多语言文件完整性')
     .action(() => {
-      onCommand({
-        type: 'generate',
-        projectRoot: cwd,
-      })
+      onCommand({ type: 'validate', projectRoot: cwd })
+    })
+
+  program
+    .command('init')
+    .description('初始化缺失的多语言文件')
+    .action(() => {
+      onCommand({ type: 'init', projectRoot: cwd })
+    })
+
+  program
+    .command('update')
+    .description('更新多语言文件（创建缺失、清理多余）')
+    .action(() => {
+      onCommand({ type: 'update', projectRoot: cwd })
     })
 
   return program
@@ -75,18 +81,12 @@ export async function resolveCommand(
     await program.parseAsync(args, { from: 'user' })
   } catch (error) {
     if (error instanceof CommanderError) {
-      return {
-        exitCode: error.exitCode,
-      }
+      return { exitCode: error.exitCode }
     }
-
     throw error
   }
 
   return {
-    command: resolvedCommand ?? {
-      type: 'ui',
-      projectRoot: cwd,
-    },
+    command: resolvedCommand ?? { type: 'ui', projectRoot: cwd },
   }
 }

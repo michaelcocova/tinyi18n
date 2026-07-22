@@ -23,6 +23,7 @@ export const useAssembleMessages = createGlobalState(() => {
     const merged = mergeWorkspaceLocales(workspace.value)
     locales.value = Object.keys(merged).sort()
     messages.value = flattenLocales(merged)
+    sortNodesByType(messages.value)
   }
 
   return {

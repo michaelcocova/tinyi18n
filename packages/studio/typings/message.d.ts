@@ -6,7 +6,8 @@ declare global {
   export interface BasicMessage {
     id: string
     key: string
-    parent?: number
+    parent?: string
+    path?: string
   }
 
   export interface GroupMessage extends BasicMessage {
