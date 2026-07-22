@@ -139,8 +139,6 @@ export function normalizeFilenameBase(filename?: string) {
 
 function resolveNamespace(
   namespace: TinyI18nNamespaceConfig,
-  filenameBase: string,
-  multipleNamespaces: boolean,
 ): TinyI18nResolvedNamespaceConfig {
   const key = String(namespace.key ?? '').trim()
   if (!key) {
@@ -156,7 +154,6 @@ function resolveNamespace(
 export function resolveConfig(
   config: TinyI18nUserConfig,
 ): TinyI18nResolvedConfig {
-  const filenameBase = normalizeFilenameBase(config.filename)
   const localeConfigs = (config.locales ?? []).map(resolveLocale)
 
   const mode: 'single' | 'multi' = config.mode ?? 'multi'
@@ -170,8 +167,6 @@ export function resolveConfig(
     const namespaces = [
       resolveNamespace(
         { key: SINGLE_NAMESPACE_KEY, description: first.description ?? '' },
-        filenameBase,
-        false,
       ),
     ]
 
@@ -184,7 +179,7 @@ export function resolveConfig(
   }
 
   const namespaces = namespaceInputs.map(namespace =>
-    resolveNamespace(namespace, filenameBase, true),
+    resolveNamespace(namespace),
   )
 
   return {

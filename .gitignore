@@ -36,3 +36,4 @@ components.d.ts
 .tinyi18n-*
 packages/studio/scripts/.tinyi18n-*
 packages/studio/scripts/data.json
+**/.app*

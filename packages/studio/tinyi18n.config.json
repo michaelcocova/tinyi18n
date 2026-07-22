@@ -1,0 +1,6 @@
+[
+  { "dir": "../.apps/admin/src/locales", "namespaces": ["shared"] },
+  { "dir": "../.apps/console/src/locales", "namespaces": ["console", "shared"] },
+  { "dir": "../.apps/website/src/locales", "namespaces": ["website", "shared"] },
+  { "dir": "../.apps/sso/src/locales", "namespaces": ["sso", "shared"] }
+]

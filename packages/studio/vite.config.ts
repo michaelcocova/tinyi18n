@@ -84,7 +84,7 @@ plugins.push(
   }),
 )
 
-const config = {
+export default defineConfig({
   plugins,
   resolve: {
     alias: {
@@ -93,7 +93,8 @@ const config = {
   },
   server: {
     port: 1772,
+    watch: {
+      ignored: ['.apps/**'],
+    },
   },
-} as const
-
-export default defineConfig(config as any)
+})

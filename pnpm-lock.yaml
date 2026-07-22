@@ -112,6 +112,12 @@ importers:
       '@lucide/vue':
         specifier: ^1.20.0
         version: 1.20.0(vue@3.5.38(typescript@5.9.3))
+      '@splicetree/adapter-vue':
+        specifier: ^3.1.1
+        version: 3.1.1(vue@3.5.38(typescript@5.9.3))
+      '@splicetree/core':
+        specifier: ^3.1.1
+        version: 3.1.1
       '@types/lodash-es':
         specifier: ^4.17.12
         version: 4.17.12
@@ -182,6 +188,9 @@ importers:
       '@vitejs/plugin-vue':
         specifier: ^6
         version: 6.0.7(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))(vue@3.5.38(typescript@5.9.3))
+      nanoid:
+        specifier: ^6.0.0
+        version: 6.0.0
       tailwindcss:
         specifier: ^4.3.0
         version: 4.3.1
@@ -1151,6 +1160,14 @@ packages:
   '@sindresorhus/base62@1.0.0':
     resolution: {integrity: sha512-TeheYy0ILzBEI/CO55CP6zJCSdSWeRtGnHy8U8dWSUH4I68iqTsy7HkMktR4xakThc9jotkPQUXT4ITdbV7cHA==}
     engines: {node: '>=18'}
+
+  '@splicetree/adapter-vue@3.1.1':
+    resolution: {integrity: sha512-BIEmUdGUryP6eNkGnpzgDEKxaMAuDmqzdCiet5XHQ5fWk1ssX4dNxwZ2mljsa/JtQSBNHytJTm2k0tU4vwce2g==}
+    peerDependencies:
+      vue: ^3.0.0
+
+  '@splicetree/core@3.1.1':
+    resolution: {integrity: sha512-JFuciQ0sRGmNDSwT9NEvmMZC6+ofblmVFudT4sxCk5NHLe5bjPRoAN8Rcf28Ngk5/4chACC+nAE5RyegakvLBA==}
 
   '@stylistic/eslint-plugin@5.10.0':
     resolution: {integrity: sha512-nPK52ZHvot8Ju/0A4ucSX1dcPV2/1clx0kLcH5wDmrE4naKso7TUC/voUyU1O9OTKTrR6MYip6LP0ogEMQ9jPQ==}
@@ -2976,6 +2993,11 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
+  nanoid@6.0.0:
+    resolution: {integrity: sha512-mkUH+rPkwU2qPadJ0oJZOjeZ5Mxn8Q1UhevwkTRWNuUZzyia3h4rhzK39hxaHTk0o2OxB8W2SQ6A8k23ZDi1pQ==}
+    engines: {node: ^22 || ^24 || >=26}
+    hasBin: true
+
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
@@ -4699,6 +4721,12 @@ snapshots:
   '@simple-libs/stream-utils@1.2.0': {}
 
   '@sindresorhus/base62@1.0.0': {}
+
+  '@splicetree/adapter-vue@3.1.1(vue@3.5.38(typescript@5.9.3))':
+    dependencies:
+      vue: 3.5.38(typescript@5.9.3)
+
+  '@splicetree/core@3.1.1': {}
 
   '@stylistic/eslint-plugin@5.10.0(eslint@10.5.0(jiti@2.7.0))':
     dependencies:
@@ -6729,6 +6757,8 @@ snapshots:
   mute-stream@0.0.8: {}
 
   nanoid@3.3.12: {}
+
+  nanoid@6.0.0: {}
 
   natural-compare@1.4.0: {}
 

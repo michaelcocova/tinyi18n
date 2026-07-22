@@ -1,27 +1,29 @@
 <script setup lang="ts">
-import { useWorkspaceView } from './workspace/useWorkspace'
+import { computed } from 'vue'
+import { useMessageTree } from '@/composables/workspace/useMessageTree'
 import WorkspaceDetailView from './workspace/WorkspaceDetailView.vue'
 import WorkspaceTreeView from './workspace/WorkspaceTreeView.vue'
 
-const workspace = useWorkspaceView()
+const { selectedKey, findNode } = useMessageTree()
+const selectedNode = computed(() => selectedKey.value ? findNode(selectedKey.value) : undefined)
 </script>
 
 <template>
   <ResizablePanelGroup
     direction="horizontal"
-    class="h-full overflow-hidden "
+    class="h-full overflow-hidden"
   >
     <ResizablePanel
       size-unit="px"
       :default-size="300"
-      :min-size="260"
+      :min-size="220"
       :max-size="480"
     >
-      <WorkspaceTreeView :workspace="workspace" />
+      <WorkspaceTreeView />
     </ResizablePanel>
     <ResizableHandle with-handle />
     <ResizablePanel size-unit="px">
-      <WorkspaceDetailView :workspace="workspace" />
+      <WorkspaceDetailView :node="selectedNode as any" />
     </ResizablePanel>
   </ResizablePanelGroup>
 </template>
